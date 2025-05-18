@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Experimental.SceneManagement;
 
 public class CreateMast : MonoBehaviour
 {
@@ -93,6 +94,11 @@ public class CreateMast : MonoBehaviour
         CreateWinchesAndBlocks();
         //CreateBlocks();
 
+        //save the changes in the prefab
+        GameObject go = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;
+        EditorUtility.SetDirty(go);
+        Debug.LogWarning("Selected object: " + go.name);
+        //PrefabUtility.ApplyPrefabInstance(transform.parent.gameObject, InteractionMode.AutomatedAction);
 
         //self destroy this script (this should be last)
         if (selfDestruct)
