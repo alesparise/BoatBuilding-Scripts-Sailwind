@@ -11,7 +11,7 @@ public class CreateBoatPart : MonoBehaviour
     public int basePrice;
     public int installCost;
     public int mass;
-    [Tooltip("The part category. 0 = masts, 1 = other, 2 = stays")]
+    [Tooltip("The part category. 0 = masts, 1 = other (shrouds), 2 = stays")]
     public int category;
     [Header("Script Options")]
     [Tooltip("This is only used in the editor to make the list in BoatCustomParts clearer")]
@@ -29,6 +29,26 @@ public class CreateBoatPart : MonoBehaviour
     private GameObject boat;
     private Transform boatModel;
     private GameObject walkColObject;
+
+    public void Reset()
+    {
+        if (name.Contains("mast"))
+        {
+            category = 0;
+            if (gameObject.GetComponent<Mast>() == null && gameObject.GetComponent<CreateMast>() == null) 
+                gameObject.AddComponent<CreateMast>();
+        }
+        else if (name.Contains("Stay"))
+        {
+            category = 2;
+            if (gameObject.GetComponent<Mast>() == null && gameObject.GetComponent<CreateMast>() == null)
+                gameObject.AddComponent<CreateMast>();
+        }
+        else if (name.Contains("shrouds"))
+        {
+            category = 1;
+        }
+    }
 
     public void DoCreate()
     {

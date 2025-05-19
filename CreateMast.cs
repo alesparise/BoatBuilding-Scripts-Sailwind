@@ -189,6 +189,9 @@ public class CreateMast : MonoBehaviour
     }
     public void Reset()
     {
+        if (gameObject.GetComponent<BoatPartOption>() == null && gameObject.GetComponent<CreateBoatPart>() == null)
+            gameObject.AddComponent<CreateBoatPart>();
+
         string scriptPath = GetScriptFolderPath();
         string prefabPath = Path.Combine(Path.GetDirectoryName(scriptPath), "Prefabs");
         winchPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Path.Combine(prefabPath, "Winch.prefab"));
