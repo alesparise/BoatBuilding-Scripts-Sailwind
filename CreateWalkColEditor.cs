@@ -7,10 +7,10 @@ public class CreateWalkColEditor : Editor
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
-        CreateWalkCol myScript = (CreateWalkCol)target;
+        CreateWalkCol script = (CreateWalkCol)target;
         if (GUILayout.Button("Create Walk Col"))
         {
-            myScript.DoCreate();
+            script.DoCreate();
         }
     }
 }
