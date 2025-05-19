@@ -21,8 +21,6 @@ public class CreateMast : MonoBehaviour
     public bool onlyStaysails;
     [Tooltip("Only allow squares (bowsprit)")]
     public bool onlySquareSails;
-    [Tooltip("The radius of the collider, make it smaller if it's too big compared to the mast")]
-    public float colliderRadius = 0.25f;
 
     [Header("Script Options")]
     [Tooltip("Destroy this script once it's done")]
@@ -41,9 +39,10 @@ public class CreateMast : MonoBehaviour
         mast = gameObject.AddComponent<Mast>();
 
         //add the capsule collider and set it up
+        float radius = GetComponent<MeshRenderer>().bounds.extents.x * 1.2f;    //keeping a bit of margin to avoid sails clipping
         CapsuleCollider cc = gameObject.AddComponent<CapsuleCollider>();
         cc.direction = 2;
-        cc.radius = 0.25f;
+        cc.radius = radius;
         cc.height = mastHeight + 2f;
         cc.center = new Vector3(0f,0f, - (mastHeight / 2f));
         mast.mastCols = new CapsuleCollider[1];
@@ -92,13 +91,11 @@ public class CreateMast : MonoBehaviour
 
         //create the appropriate number of winches and blocks
         CreateWinchesAndBlocks();
-        //CreateBlocks();
 
-        //save the changes in the prefab
+        //save the changes in the prefab (setting it as dirty seems to do the trick)
         GameObject go = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;
         EditorUtility.SetDirty(go);
-        Debug.LogWarning("Selected object: " + go.name);
-        //PrefabUtility.ApplyPrefabInstance(transform.parent.gameObject, InteractionMode.AutomatedAction);
+        LogGreen("Saved changes to the prefab");
 
         //self destroy this script (this should be last)
         if (selfDestruct)
