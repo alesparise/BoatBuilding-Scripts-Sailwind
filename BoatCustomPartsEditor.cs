@@ -92,7 +92,8 @@ public class BoatCustomPartsEditor : Editor
         {
             return "";
         }
-        if (option.GetComponent<CreateBoatPart>()?.partTitle != "")
+        CreateBoatPart cbp = option.GetComponent<CreateBoatPart>();
+        if (cbp != null && cbp.partTitle != "")
         {
             return option.GetComponent<CreateBoatPart>().partTitle;
         }
