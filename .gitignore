@@ -1,0 +1,4 @@
+# Gitignore for unity folder
+
+# Ignore other unnecessary files
+*.meta
