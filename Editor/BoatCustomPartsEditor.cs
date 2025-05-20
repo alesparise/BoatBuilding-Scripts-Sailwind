@@ -78,7 +78,7 @@ public class BoatCustomPartsEditor : Editor
     private string GetName(int index)
     {
         List<BoatPart> availableParts = script?.availableParts;
-        if (availableParts.Count == 0)
+        if (availableParts.Count == 0 || index >= availableParts.Count)
         {
             return "";
         }

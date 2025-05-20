@@ -1,36 +1,63 @@
-﻿using UnityEditor;
+﻿using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 
 public class CreateWalkCol : MonoBehaviour
 {
     [Header("Walk Col Position")]
-    [SerializeField]
     [Tooltip("The position the walk col will be created at.+")]
-    private Vector3 pos;
-    [Header("Options")]
-    [SerializeField]
+    public Vector3 position;
+    [Header("Script Options")]
     [Tooltip("Automatically adds mesh colliders to every child in the walk col. Only use for quick tests.")]
-    private bool automaticMeshColliders;
-    [SerializeField]
+    public bool automaticMeshColliders;
     [Tooltip("Automatically removes this script once used.")]
-    private bool selfDestroy;
+    public bool selfDestroy;
+
+    private List<BoatPartOption> partOptions = new List<BoatPartOption>();
+    private List<Mast> masts = new List<Mast>();
+    private List<GameObject> winches = new List<GameObject>();
+
+    private GameObject boat;    //prefab root object
+
+    private int removedWinches = 0;
 
     private int meshColliderCount = 0; //number of mesh colliders added to the walk col
     public void DoCreate()
     {
-        Transform prefab = transform.parent;  //the prefab's transform
+        boat = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;
+        //reset
+        removedWinches = 0;
+        partOptions.Clear();
+        masts.Clear();
+        winches.Clear();
+
+        Transform prefab = boat.transform;  //the prefab's transform
 
         GameObject walkCol = Instantiate(gameObject, prefab);
-        walkCol.transform.localPosition = pos;
-        walkCol.name = "WALK " + gameObject.name;
+        walkCol.transform.localPosition = position;
+        walkCol.name = "WALK " + name;
 
         Undo.RegisterCreatedObjectUndo(walkCol, "Create Walk Col"); //can use ctrl+z to undo
 
         Debug.Log("<color=green>BoatBuilder: Instantiated Walk Col</color>");
 
+
         //remove all unnecessary components
+        CollectWinches(walkCol);
+        foreach (GameObject winch in winches)
+        {
+            DestroyImmediate(winch);
+        }
+        Debug.Log("<color=green>BoatBuilder: Removed <b>" + removedWinches + "</b> winches and blocks from the walkCol</color>");
         RemoveComponents(walkCol);
 
+        //set all BoatPartOptions and Mast references to the WALK col object
+        TraverseHierarchy(transform);
+        SetWalkCols(walkCol.transform);
+
+        //remove all winches from the walk col
+        
         //add mesh colliders to all children
         if (automaticMeshColliders)
         {
@@ -69,6 +96,33 @@ public class CreateWalkCol : MonoBehaviour
         else
         {
             Debug.Log("<color=green>BoatBuilder: Kept self</color>");
+        }
+    }
+    private void SetWalkCols(Transform tra)
+    {
+
+        foreach (BoatPartOption option in partOptions)
+        {
+            option.walkColObject = CreateBoatPart.FindWalkColObject(option.transform, tra);
+            Debug.Log("Set walk col object for " + option.name);
+        }
+        foreach (Mast mast in masts)
+        {
+            mast.walkColMast = CreateBoatPart.FindWalkColObject(mast.transform, tra).transform;
+            Debug.Log("Set walk col object for " + mast.name);
+        }
+    }
+    private void TraverseHierarchy(Transform tra)
+    {
+        Mast mast = tra.GetComponent<Mast>();
+        if (mast != null) masts.Add(mast); //Debug.Log("Added mast: " + mast.name + " to list");
+
+        BoatPartOption partOption = tra.GetComponent<BoatPartOption>();
+        if (partOption != null) partOptions.Add(partOption);
+        
+        foreach (Transform child in tra.transform)
+        {
+            TraverseHierarchy(child);
         }
     }
     private void RemoveComponents(GameObject walkCol)
@@ -111,6 +165,22 @@ public class CreateWalkCol : MonoBehaviour
         {
             DestroyImmediate(water_mask.gameObject);
             Debug.Log("<color=green>Removed water_mask object</color>");
+        }
+    }
+    private void CollectWinches(GameObject obj)
+    {   //remove all winches from the walk col
+        
+        if (obj.name.Contains("winch_") || obj.name.Contains("block_"))
+        {
+            winches.Add(obj);
+            removedWinches++;
+        }
+        else
+        {
+            foreach (Transform child in obj.transform)
+            {   //go through all children recursively
+                CollectWinches(child.gameObject);
+            }
         }
     }
     private void AddMeshColliders(GameObject parent)

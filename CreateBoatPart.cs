@@ -26,14 +26,16 @@ public class CreateBoatPart : MonoBehaviour
     [Tooltip("Self destroy this script once done")]
     public bool selfDestruct;
 
-    private GameObject boat;
+    [HideInInspector]
+    public GameObject boat;
     private Transform boatModel;
-    private GameObject walkColObject;
+    //private GameObject walkColObject;
 
     public void Reset()
-    {
+    {   //add CreateMast component when the script is attached if it has mast or stay in the name, also adjust category
+        boat = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;   //this is the prefab root object AKA the BOAT object
         if (name.Contains("mast"))
-        {
+        {   
             category = 0;
             if (gameObject.GetComponent<Mast>() == null && gameObject.GetComponent<CreateMast>() == null) 
                 gameObject.AddComponent<CreateMast>();
@@ -52,9 +54,12 @@ public class CreateBoatPart : MonoBehaviour
 
     public void DoCreate()
     {
-        boat = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;   //this is the prefab root object AKA the BOAT object
-        LogGreen("Boat: " + boat.name);
-        // add the boat option and set it up
+        if (GetComponent<BoatPartOption>() != null)
+        {
+            Debug.LogError("This object already has a BoatPartOption component");
+            return;
+        }
+        //add the boat option and set it up
         BoatPartOption option = gameObject.AddComponent<BoatPartOption>();
         option.optionName = optionName;
         option.basePrice = basePrice;
@@ -63,8 +68,13 @@ public class CreateBoatPart : MonoBehaviour
         //set the walk col reference
         FindBoatModel(transform.parent);    //find the boatModel object
         Transform walkCol = boat.transform.Find("WALK " + boatModel.name);  //find the WALK boatModel object
-        FindWalkColObject(walkCol);     //find the correct walk col object inside of the WALK object
-        option.walkColObject = walkColObject;   //note, this requires every potential boat part option to have a custom name, otherwise it won't work properly
+        if (walkCol == null)
+        {
+            Debug.LogError("Could not find the WALK col object in the prefab");
+            return;
+        }
+        option.walkColObject = FindWalkColObject(transform, walkCol);     //find the correct walk col object inside of the WALK object
+        //option.walkColObject = walkColObject;   //note, this requires every potential boat part option to have a custom name, otherwise it won't work properly
 
         //add the part to the BoatCustomParts script
         BoatCustomParts customParts = boat.GetComponent<BoatCustomParts>();
@@ -80,20 +90,38 @@ public class CreateBoatPart : MonoBehaviour
                 category = category,
                 partOptions = new List<BoatPartOption> { option }
             };
-
-            LogGreen("newPart.activeOption: " + newPart.activeOption + "newPart.category: " + newPart.category + "newPart.partOptions.Count: " + newPart.partOptions.Count);
             customParts.availableParts.Add(newPart);
-            
         }
         else
-        {
-            //need to add this as an option to an existing part
+        {   //need to add this as an option to an existing part
             if (partIndex > customParts.availableParts.Count)
             {
                 Debug.LogError("Could not find a part with this partIndex");
                 return;
             }
             customParts.availableParts[partIndex].partOptions.Add(option);
+        }
+        if (canBeDisabled && EmptyPartCheck(customParts.availableParts))
+        {   //if the part can be disabled, and there is no "no_part" existing already, add an empty option to the list
+            GameObject empty = new GameObject();   //create a new game object
+            GameObject noPart = Instantiate(empty, transform.parent);
+            noPart.name = "no_" + name;
+            BoatPartOption noOption = noPart.AddComponent<BoatPartOption>();
+            noOption.optionName = "No " + optionName;
+            noOption.basePrice = 0;
+            noOption.installCost = 0;
+            noOption.mass = 0;
+
+            //create the empty walk col object in the right place
+            Transform walkObjParent = option.walkColObject.transform.parent;
+            GameObject noPartWalk = Instantiate(empty, walkObjParent);
+            noPartWalk.name = noPart.name;
+            noOption.walkColObject = noPartWalk;
+
+            DestroyImmediate(empty);    //destroy the empty object since it creates one in the scene too for some reason
+
+            //add the part to the list
+            customParts.availableParts[customParts.availableParts.Count - 1].partOptions.Add(noOption);
         }
 
         //save the changes (set the boat prefab dirty)
@@ -102,7 +130,7 @@ public class CreateBoatPart : MonoBehaviour
         //self destruct if needed (this bit should be last)
         if (selfDestruct)
         {
-            Debug.Log("<color=orange>Self destructing CreateBoatPart script. DON'T PANIC!!! Part Title won't work for this!</orange>");
+            Debug.Log("<color=orange>Self destructing CreateBoatPart script. DON'T PANIC!!! \nHowever, Part Title won't work for this part!</orange>");
             DestroyImmediate(this);
         }
         else
@@ -123,22 +151,35 @@ public class CreateBoatPart : MonoBehaviour
             else Debug.LogError("boatModel not found, an object shoudl have the BoatHorizon script for this to work"); return;
         }
     }
-    private void FindWalkColObject(Transform tra)
+    public static GameObject FindWalkColObject(Transform target, Transform traversedTransform)
     {   //recursively searches for the right walk col object
-        foreach (Transform child in tra)
+        foreach (Transform child in traversedTransform)
         {
-            if (child.name == name)
+            if (child.name == target.name)
             {
-                walkColObject = child.gameObject;
-                LogGreen("Found the corresponding walk col object for " + name);
-
-                return;
+                Debug.Log("Found the corresponding walk col object for " + target.name);
+                return child.gameObject;
             }
-            else
+            GameObject found = FindWalkColObject(target, child);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+    private bool EmptyPartCheck(List<BoatPart> availableParts)
+    {
+        int lastPart = availableParts.Count - 1;
+        List<BoatPartOption> partOptions = availableParts[lastPart].partOptions;
+        foreach (BoatPartOption option in partOptions)
+        {
+            if (option.optionName.StartsWith("no_"))
             {
-                FindWalkColObject(child);
+                Debug.Log("<color=orange>BoatBuilder: This part already has a no option</color>");
+                return false;
             }
         }
+        return true;
     }
     private void LogGreen(string str)
     {
