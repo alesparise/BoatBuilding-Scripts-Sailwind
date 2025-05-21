@@ -17,7 +17,7 @@ public class CreateWalkCol : MonoBehaviour
     public bool removeObjects = true;
     //[HideInInspector]
     [Tooltip("The names of the objects that should be removed from the walk col. This does not include winches and blocks")]
-    public string[] objectsToRemove = { "embark_col", "water_mask", "hull_push" }; //add or change this to remove other objects. Does not include winches and blocks
+    public string[] objectsToRemove = { "embark_col", "water_mask", "hull_push", "water_damage", "splash_mask" }; //add or change this to remove other objects. Does not include winches and blocks
 
     private List<BoatPartOption> partOptions = new List<BoatPartOption>();
     private List<Mast> masts = new List<Mast>();
