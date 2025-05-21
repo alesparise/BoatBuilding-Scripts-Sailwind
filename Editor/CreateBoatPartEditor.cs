@@ -18,7 +18,13 @@ public class CreateBoatPartEditor : Editor
         EditorGUI.BeginDisabledGroup(script.isNewPart);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("partIndex"));
         var (message, messageType) = ListParts(script);
-        EditorGUILayout.HelpBox(message, messageType);
+        
+        if (!script.isNewPart)
+        {
+            EditorGUILayout.HelpBox(message, messageType);
+            EditorGUI.EndDisabledGroup();
+            if (messageType == MessageType.Error) return;
+        }
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.HelpBox("Part Title is only used in the editor to make the BoatCustomParts script clearer to read.", MessageType.Info);
 
@@ -39,7 +45,7 @@ public class CreateBoatPartEditor : Editor
         }
         else if (script.partIndex >= bcp.availableParts.Count)
         {
-            return ("There is no part with this index", MessageType.Error);
+            return ("There is no part with this index. Is this a new part?", MessageType.Error);
         }
         else
         {

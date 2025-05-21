@@ -29,7 +29,6 @@ public class CreateBoatPart : MonoBehaviour
     [HideInInspector]
     public GameObject boat;
     private Transform boatModel;
-    //private GameObject walkColObject;
 
     public void Reset()
     {   //add CreateMast component when the script is attached if it has mast or stay in the name, also adjust category
@@ -51,7 +50,6 @@ public class CreateBoatPart : MonoBehaviour
             category = 1;
         }
     }
-
     public void DoCreate()
     {
         if (GetComponent<BoatPartOption>() != null)
@@ -74,7 +72,6 @@ public class CreateBoatPart : MonoBehaviour
             return;
         }
         option.walkColObject = FindWalkColObject(transform, walkCol);     //find the correct walk col object inside of the WALK object
-        //option.walkColObject = walkColObject;   //note, this requires every potential boat part option to have a custom name, otherwise it won't work properly
 
         //add the part to the BoatCustomParts script
         BoatCustomParts customParts = boat.GetComponent<BoatCustomParts>();
@@ -161,8 +158,7 @@ public class CreateBoatPart : MonoBehaviour
                 return child.gameObject;
             }
             GameObject found = FindWalkColObject(target, child);
-            if (found != null)
-                return found;
+            if (found != null) return found;
         }
 
         return null;

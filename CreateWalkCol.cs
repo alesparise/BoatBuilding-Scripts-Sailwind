@@ -10,9 +10,14 @@ public class CreateWalkCol : MonoBehaviour
     public Vector3 position;
     [Header("Script Options")]
     [Tooltip("Automatically adds mesh colliders to every child in the walk col. Only use for quick tests.")]
-    public bool automaticMeshColliders;
+    public bool autoMeshColliders;
     [Tooltip("Automatically removes this script once used.")]
     public bool selfDestroy;
+    [Tooltip("Destroy unnecessary objects from the walk col")]
+    public bool removeObjects = true;
+    //[HideInInspector]
+    [Tooltip("The names of the objects that should be removed from the walk col. This does not include winches and blocks")]
+    public string[] objectsToRemove = { "embark_col", "water_mask", "hull_push" }; //add or change this to remove other objects. Does not include winches and blocks
 
     private List<BoatPartOption> partOptions = new List<BoatPartOption>();
     private List<Mast> masts = new List<Mast>();
@@ -44,22 +49,23 @@ public class CreateWalkCol : MonoBehaviour
 
 
         //remove all unnecessary components
-        CollectWinches(walkCol);
-        foreach (GameObject winch in winches)
-        {
-            DestroyImmediate(winch);
+        if (removeObjects)
+        {   //remove all winches and blocks from the walk col
+            CollectWinches(walkCol);
+            foreach (GameObject winch in winches)
+            {
+                DestroyImmediate(winch);
+            }
+            Debug.Log("<color=green>BoatBuilder: Removed <b>" + removedWinches + "</b> winches and blocks from the walkCol</color>");
         }
-        Debug.Log("<color=green>BoatBuilder: Removed <b>" + removedWinches + "</b> winches and blocks from the walkCol</color>");
         RemoveComponents(walkCol);
 
         //set all BoatPartOptions and Mast references to the WALK col object
         TraverseHierarchy(transform);
         SetWalkCols(walkCol.transform);
 
-        //remove all winches from the walk col
-        
         //add mesh colliders to all children
-        if (automaticMeshColliders)
+        if (autoMeshColliders)
         {
             meshColliderCount = 0;
             AddMeshColliders(walkCol);
@@ -81,6 +87,16 @@ public class CreateWalkCol : MonoBehaviour
         {
             boatRefs.walkCol = walkCol.transform;
             Debug.Log("<color=green>BoatBuilder: Set walkCol reference in BoatRefs</color>");
+        }
+        BoatEmbarkCollider bec = GetComponentInChildren<BoatEmbarkCollider>();
+        if (bec == null)
+        {
+            Debug.LogError("BoatBuilder: Could not find BoatEmbarkCollider component inside of the prefab");
+        }
+        else
+        {
+            bec.walkCollider = walkCol.transform;
+            Debug.Log("<color=green>BoatBuilder: Set walkCol reference in BoatEmbarkCollider</color>");
         }
 
         //set the walk col to the right layer
@@ -144,27 +160,21 @@ public class CreateWalkCol : MonoBehaviour
         }
         Debug.Log("<color=green>BoatBuilder: Removed <b>" + i + "</b> components from the walkCol</color>");
 
-        //remove the embark_col and water_mask objects entirely
+        //remove the objects mentioned in the objectsToRemove array
+        if (!removeObjects) return;
         Transform walkTransform = walkCol.transform;
-        Transform embark_col = walkTransform.Find("embark_col");
-        Transform water_mask = walkTransform.Find("water_mask");
-        if (embark_col == null)
+        foreach (string obj in objectsToRemove)
         {
-            Debug.LogError("BoatBuilder: Could not find embark_col object");
-        }
-        else
-        {
-            DestroyImmediate(embark_col.gameObject);
-            Debug.Log("<color=green>Removed embark_col object</color>");
-        }
-        if (water_mask == null)
-        {
-            Debug.LogError("BoatBuilder: Could not find water_mask object");
-        }
-        else
-        {
-            DestroyImmediate(water_mask.gameObject);
-            Debug.Log("<color=green>Removed water_mask object</color>");
+            Transform toRemove = walkTransform.Find(obj);
+            if (toRemove == null)
+            {
+                Debug.LogError("<color=red>BoatBuilder: Could not find " + obj + " object</color>");
+            }
+            else
+            {
+                DestroyImmediate(toRemove.gameObject);
+                Debug.Log("<color=green>Removed " + obj + " object</color>");
+            }
         }
     }
     private void CollectWinches(GameObject obj)
