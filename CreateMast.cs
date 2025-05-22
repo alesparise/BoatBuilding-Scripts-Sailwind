@@ -33,8 +33,9 @@ public class CreateMast : MonoBehaviour
     public float maxHeight;
     private float radius;
 
-    private static int mastCount = 0;
+    private bool init;
 
+    private static int mastCount = 0;
 
     public void DoCreate()
     {
@@ -219,11 +220,7 @@ public class CreateMast : MonoBehaviour
         if (gameObject.GetComponent<BoatPartOption>() == null && gameObject.GetComponent<CreateBoatPart>() == null)
             Undo.AddComponent<CreateBoatPart>(gameObject);
 
-        Bounds bounds = GetComponent<MeshFilter>().sharedMesh.bounds;
-        Vector3 extents = bounds.extents;
-        radius = extents.x;
-        maxHeight = (float)Math.Round(extents.z * 2f - (extents.z + bounds.center.z), 2);
-
+        SetRadiusAndHeight();
         mastHeight = (float)Math.Round(0.75f * maxHeight, 2);
 
         string scriptPath = GetScriptFolderPath();
@@ -245,6 +242,11 @@ public class CreateMast : MonoBehaviour
     }
     public void OnDrawGizmosSelected()
     {
+        if (!init)
+        {   //otherwise the radius becomes zero when you leave and reenter prefab mode
+            SetRadiusAndHeight();
+            init = true;
+        }
         Vector3 size = new Vector3(1f, 0.01f, 2.4f * radius);
         Vector3 offset = new Vector3(0f, 0f, -mastHeight);
         Vector3 worldPosition = transform.TransformPoint(offset);
@@ -264,6 +266,13 @@ public class CreateMast : MonoBehaviour
     {
         string scriptPath = AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(this));
         return Path.GetDirectoryName(scriptPath);
+    }
+    private void SetRadiusAndHeight()
+    {
+        Bounds bounds = GetComponent<MeshFilter>().sharedMesh.bounds;
+        Vector3 extents = bounds.extents;
+        radius = extents.x;
+        maxHeight = (float)Math.Round(extents.z * 2f - (extents.z + bounds.center.z), 2);
     }
     private void LogGreen(string str)
     {
