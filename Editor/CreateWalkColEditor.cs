@@ -17,7 +17,6 @@ public class CreateWalkColEditor : Editor
             return;
         }
         base.OnInspectorGUI();
-        //DrawPropertiesExcluding(serializedObject, "m_Script", "objectsToRemove");
 
         //manually draw the objectToRemove array
         serializedObject.Update();

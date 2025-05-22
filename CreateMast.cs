@@ -13,9 +13,7 @@ public class CreateMast : MonoBehaviour
     [Header("Mast Options")]
     [Tooltip("The maximum number of sails this mast allows")]
     public int maxSails;
-    //[Range(0f,50f)]
     [Tooltip("The usable height of the mast")]
-    [Range(0f, 40f)]
     public float mastHeight;
     [Tooltip("Only allow staysails")]
     public bool onlyStaysails;
@@ -30,6 +28,8 @@ public class CreateMast : MonoBehaviour
 
     private Transform walkCol;
 
+    [HideInInspector]
+    public float maxHeight;
     private float radius;
 
     private static int mastCount = 0;
@@ -41,15 +41,13 @@ public class CreateMast : MonoBehaviour
 
         Undo.SetCurrentGroupName("Set up mast " + name);
         int group = Undo.GetCurrentGroup();
-        //Undo.IncrementCurrentGroup();
         //add Mast component and Collider, set collider reference, rigidbody reference, walk col reference
         mast = Undo.AddComponent<Mast>(gameObject);
 
         //add the capsule collider and set it up
-        radius = GetComponent<MeshRenderer>().bounds.extents.x * 1.2f;    //keeping a bit of margin to avoid sails clipping
         CapsuleCollider cc = Undo.AddComponent<CapsuleCollider>(gameObject);
         cc.direction = 2;
-        cc.radius = radius;
+        cc.radius = radius * 1.2f;  //keeping a bit of margin to avoid sails clipping
         cc.height = mastHeight + 2f;
         cc.center = new Vector3(0f,0f, - (mastHeight / 2f));
         mast.mastCols = new CapsuleCollider[1];
@@ -216,9 +214,16 @@ public class CreateMast : MonoBehaviour
         return true;
     }
     public void Reset()
-    {
+    {   //this runs every time you add the script or when clicking "reset" from the options
         if (gameObject.GetComponent<BoatPartOption>() == null && gameObject.GetComponent<CreateBoatPart>() == null)
             Undo.AddComponent<CreateBoatPart>(gameObject);
+
+        Bounds bounds = GetComponent<MeshFilter>().sharedMesh.bounds;
+        Vector3 extents = bounds.extents;
+        radius = extents.x;
+        maxHeight = (float)System.Math.Round(extents.z * 2f - (extents.z + bounds.center.z), 2);
+
+        mastHeight = maxHeight;
 
         string scriptPath = GetScriptFolderPath();
         string prefabPath = Path.Combine(Path.GetDirectoryName(scriptPath), "Prefabs");
@@ -237,18 +242,18 @@ public class CreateMast : MonoBehaviour
             LogGreen("Winch and block prefabs loaded");
         }
     }
-    public void OnDrawGizmos()
+    public void OnDrawGizmosSelected()
     {
-        Vector3 size = new Vector3(0.75f, 0.01f, 0.75f);
+        Vector3 size = new Vector3(1f, 0.01f, 2.4f * radius);
         Vector3 offset = new Vector3(0f, 0f, -mastHeight);
         Vector3 worldPosition = transform.TransformPoint(offset);
         Quaternion gizmoRotation = transform.rotation * Quaternion.Euler(90f, 0f, 0f);
 
-        Gizmos.color = new Color(1f, 0.2f, 0.2f, 1f);
+        Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.9f);
         Gizmos.matrix = Matrix4x4.TRS(transform.position, gizmoRotation, Vector3.one);
         Gizmos.DrawCube(Vector3.zero, size);
 
-        Gizmos.color = new Color(0.2f, 1f, 0.2f, 1f);
+        Gizmos.color = new Color(0.2f, 1f, 0.2f, 0.9f);
         Gizmos.matrix = Matrix4x4.TRS(worldPosition, gizmoRotation, Vector3.one);
         Gizmos.DrawCube(Vector3.zero, size);
         Gizmos.matrix = Matrix4x4.identity;
