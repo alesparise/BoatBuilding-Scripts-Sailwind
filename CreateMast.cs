@@ -34,7 +34,10 @@ public class CreateMast : MonoBehaviour
     public void DoCreate()
     {
         if (!AllGood()) return;
-        
+
+        Undo.SetCurrentGroupName("Set up mast " + name);
+        int group = Undo.GetCurrentGroup();
+        //Undo.IncrementCurrentGroup();
         //add Mast component and Collider, set collider reference, rigidbody reference, walk col reference
         mast = Undo.AddComponent<Mast>(gameObject);
 
@@ -92,6 +95,8 @@ public class CreateMast : MonoBehaviour
         //create the appropriate number of winches and blocks
         CreateWinchesAndBlocks();
 
+        Undo.CollapseUndoOperations(group);
+
         //save the changes in the prefab (setting it as dirty seems to do the trick)
         GameObject go = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;
         EditorUtility.SetDirty(go);
@@ -123,8 +128,8 @@ public class CreateMast : MonoBehaviour
             mast.rightAngleWinch[0].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
             mast.leftAngleWinch[0].name = "winch_left";
             mast.rightAngleWinch[0].name = "winch_right";
-            Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[0], "Create winch for mast " + gameObject.name);
-            Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[0], "Create winch for mast " + gameObject.name);
+            Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[0].gameObject, "Create winch for mast " + gameObject.name);
+            Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[0].gameObject, "Create winch for mast " + gameObject.name);
         }
         //add all the winches that are required for each sail
         for (int i = 0; i < maxSails; i++)
@@ -133,7 +138,7 @@ public class CreateMast : MonoBehaviour
             mast.reefWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.down * (mastHeight - i * 0.35f) + Vector3.back * 0.25f, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
             mast.reefWinch[i].name = "reef_winch_" + i;
             mast.reefWinch[i].transform.localEulerAngles = new Vector3(0f, -90f, 0f);
-            Undo.RegisterCreatedObjectUndo(mast.reefWinch[i], "Create winch for mast " + gameObject.name);
+            Undo.RegisterCreatedObjectUndo(mast.reefWinch[i].gameObject, "Create winch for mast " + gameObject.name);
 
             //blocks
             mast.mastReefAtt[i] = Instantiate(blockPrefab, mastPos + Vector3.down * (i * 0.35f) + Vector3.back * 0.25f, Quaternion.identity, transform).transform;
@@ -148,7 +153,7 @@ public class CreateMast : MonoBehaviour
                 mast.midAngleWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.down * mastHeight + Vector3.back * (3f + i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
                 mast.midAngleWinch[i].name = "mid_winch_" + i;
                 mast.midAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, 0f);
-                Undo.RegisterCreatedObjectUndo(mast.midAngleWinch[i], "Create winch for mast " + gameObject.name);
+                Undo.RegisterCreatedObjectUndo(mast.midAngleWinch[i].gameObject, "Create winch for mast " + gameObject.name);
             }
             if (onlyStaysails)
             {   //have two winches for each staysail
@@ -158,8 +163,8 @@ public class CreateMast : MonoBehaviour
                 mast.rightAngleWinch[i].name = "winch_right_" + i;
                 mast.leftAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, -90f);
                 mast.rightAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
-                Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[i], "Create winch for mast " + gameObject.name);
-                Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[i], "Create winch for mast " + gameObject.name);
+                Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[i].gameObject, "Create winch for mast " + gameObject.name);
+                Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[i].gameObject, "Create winch for mast " + gameObject.name);
             }
         }
     }
