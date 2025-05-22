@@ -20,7 +20,7 @@ public class CreateMast : MonoBehaviour
     [Tooltip("Only allow staysails")]
     public bool onlyStaysails;
     [Tooltip("Only allow squares (bowsprit)")]
-    public bool onlySquareSails;
+    public bool bowsprit;
 
     [Header("Script Options")]
     [Tooltip("Destroy this script once it's done")]
@@ -36,11 +36,11 @@ public class CreateMast : MonoBehaviour
         if (!AllGood()) return;
         
         //add Mast component and Collider, set collider reference, rigidbody reference, walk col reference
-        mast = gameObject.AddComponent<Mast>();
+        mast = Undo.AddComponent<Mast>(gameObject);
 
         //add the capsule collider and set it up
         float radius = GetComponent<MeshRenderer>().bounds.extents.x * 1.2f;    //keeping a bit of margin to avoid sails clipping
-        CapsuleCollider cc = gameObject.AddComponent<CapsuleCollider>();
+        CapsuleCollider cc = Undo.AddComponent<CapsuleCollider>(gameObject);
         cc.direction = 2;
         cc.radius = radius;
         cc.height = mastHeight + 2f;
@@ -53,7 +53,7 @@ public class CreateMast : MonoBehaviour
                       transform.parent.parent.GetComponentInParent<Rigidbody>();  //this should work because only the parent has a rigidbody. Won't work if the mast is nested deeper inside the object
         if (mast.shipRigidbody == null)
         {
-            Debug.LogError("Could not find ship rigidbody");
+            LogRed("Could not find ship rigidbody");
             return;
         }
 
@@ -64,7 +64,7 @@ public class CreateMast : MonoBehaviour
 
         //configure options
         mast.onlyStaysails = onlyStaysails;
-        mast.onlySquareSails = onlySquareSails;
+        mast.onlySquareSails = bowsprit;
         mast.maxSails = maxSails;
         mast.mastHeight = mastHeight;
         mast.orderIndex = mastCount;
@@ -76,7 +76,7 @@ public class CreateMast : MonoBehaviour
         {   //normal mast
             mast.leftAngleWinch = new GPButtonRopeWinch[1];
             mast.rightAngleWinch = new GPButtonRopeWinch[1];
-            if (!onlySquareSails)
+            if (!bowsprit)
             {   //no need for the mid angle winch on the bowsprit
                 mast.midAngleWinch = new GPButtonRopeWinch[maxSails];
             }
@@ -87,7 +87,7 @@ public class CreateMast : MonoBehaviour
             mast.rightAngleWinch = new GPButtonRopeWinch[maxSails];
         }
         mast.reefWinch = new GPButtonRopeWinch[maxSails];   //always one for each sail
-        mast.mastReefAttExtension = new Transform[maxSails]; //always one for each sail
+        mast.mastReefAtt = new Transform[maxSails]; //always one for each sail
 
         //create the appropriate number of winches and blocks
         CreateWinchesAndBlocks();
@@ -100,7 +100,7 @@ public class CreateMast : MonoBehaviour
         //self destroy this script (this should be last)
         if (selfDestruct)
         {
-            Debug.LogWarning("Self destructing Create Mast script on " + gameObject.name);
+            LogOrange("Self destructing Create Mast script on " + gameObject.name);
             DestroyImmediate(this);
         }
         else
@@ -123,6 +123,8 @@ public class CreateMast : MonoBehaviour
             mast.rightAngleWinch[0].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
             mast.leftAngleWinch[0].name = "winch_left";
             mast.rightAngleWinch[0].name = "winch_right";
+            Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[0], "Create winch for mast " + gameObject.name);
+            Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[0], "Create winch for mast " + gameObject.name);
         }
         //add all the winches that are required for each sail
         for (int i = 0; i < maxSails; i++)
@@ -131,18 +133,22 @@ public class CreateMast : MonoBehaviour
             mast.reefWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.down * (mastHeight - i * 0.35f) + Vector3.back * 0.25f, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
             mast.reefWinch[i].name = "reef_winch_" + i;
             mast.reefWinch[i].transform.localEulerAngles = new Vector3(0f, -90f, 0f);
+            Undo.RegisterCreatedObjectUndo(mast.reefWinch[i], "Create winch for mast " + gameObject.name);
+
             //blocks
-            mast.mastReefAttExtension[i] = Instantiate(blockPrefab, mastPos + Vector3.down * (i * 0.35f) + Vector3.back * 0.25f, Quaternion.identity, transform).transform;
-            mast.mastReefAttExtension[i].name = "reef_block_" + i;
-            mast.mastReefAttExtension[i].localEulerAngles = new Vector3(0f, 45f, 0f);
-            mast.mastReefAttExtension[i].localScale = new Vector3(0.4f, 0.4f, 0.4f);
+            mast.mastReefAtt[i] = Instantiate(blockPrefab, mastPos + Vector3.down * (i * 0.35f) + Vector3.back * 0.25f, Quaternion.identity, transform).transform;
+            mast.mastReefAtt[i].name = "reef_block_" + i;
+            mast.mastReefAtt[i].localEulerAngles = new Vector3(0f, 45f, 0f);
+            mast.mastReefAtt[i].localScale = new Vector3(0.4f, 0.4f, 0.4f);
+            Undo.RegisterCreatedObjectUndo(mast.mastReefAtt[i].gameObject, "Create block for mast " + gameObject.name);
 
             //code for left right in stays and code for mid sheet
-            if (!onlySquareSails && !onlyStaysails)
+            if (!bowsprit && !onlyStaysails)
             {   //mid sheet only exists for non staysails and non bowsprit masts
                 mast.midAngleWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.down * mastHeight + Vector3.back * (3f + i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
                 mast.midAngleWinch[i].name = "mid_winch_" + i;
                 mast.midAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+                Undo.RegisterCreatedObjectUndo(mast.midAngleWinch[i], "Create winch for mast " + gameObject.name);
             }
             if (onlyStaysails)
             {   //have two winches for each staysail
@@ -152,6 +158,8 @@ public class CreateMast : MonoBehaviour
                 mast.rightAngleWinch[i].name = "winch_right_" + i;
                 mast.leftAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, -90f);
                 mast.rightAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[i], "Create winch for mast " + gameObject.name);
+                Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[i], "Create winch for mast " + gameObject.name);
             }
         }
     }
@@ -159,29 +167,34 @@ public class CreateMast : MonoBehaviour
     {   //Checks if everything is set up correctly before running the script, also logs the errors
         if (mastHeight <= 0)
         {
-            Debug.LogError("Mast height must be greater than 0");
+            LogRed("Mast height must be greater than 0");
             return false;
         }
         if (maxSails <= 0)
         {
-            Debug.LogError("Max sails must be greater than 0");
+            LogRed("Max sails must be greater than 0");
             return false;
         }
         string walkName = "WALK " + transform.parent.name;
         walkCol = transform.parent.parent.Find(walkName);
         if (walkCol == null)
         {
-            Debug.LogError("Could not find walk col " + walkName);
+            LogRed("Could not find walk col " + walkName);
             return false;
         }
         if (GetComponent<Mast>() != null)
         {
-            Debug.LogError("Mast component already exists on " + gameObject.name);
+            LogRed("Mast component already exists on " + gameObject.name);
             return false;
         }
         if (GetComponent<CapsuleCollider>() != null)
         {
-            Debug.LogError("Capsule collider already exists on " + gameObject.name);
+            LogRed("Capsule collider already exists on " + gameObject.name);
+            return false;
+        }
+        if (onlyStaysails && bowsprit)
+        {
+            LogRed("A bowsprit cannot allow only staysails");
             return false;
         }
 
@@ -190,7 +203,7 @@ public class CreateMast : MonoBehaviour
     public void Reset()
     {
         if (gameObject.GetComponent<BoatPartOption>() == null && gameObject.GetComponent<CreateBoatPart>() == null)
-            gameObject.AddComponent<CreateBoatPart>();
+            Undo.AddComponent<CreateBoatPart>(gameObject);
 
         string scriptPath = GetScriptFolderPath();
         string prefabPath = Path.Combine(Path.GetDirectoryName(scriptPath), "Prefabs");
@@ -202,22 +215,29 @@ public class CreateMast : MonoBehaviour
 
         if (!string.IsNullOrEmpty(missingPrefabs))
         {
-            Debug.LogError($"{missingPrefabs.TrimEnd(',', ' ')} not found. Should be in the {prefabPath} folder");
+            LogRed($"{missingPrefabs.TrimEnd(',', ' ')} not found. Should be in the {prefabPath} folder");
         }
         else
         {
-            Debug.Log("<color=green>Winch and block prefabs loaded</color>");
+            LogGreen("Winch and block prefabs loaded");
         }
     }
     public void OnDrawGizmos()
     {
         Vector3 size = new Vector3(0.75f, 0.01f, 0.75f);
+        Vector3 offset = new Vector3(0f, 0f, -mastHeight);
+        Vector3 worldPosition = transform.TransformPoint(offset);
+        Quaternion gizmoRotation = transform.rotation * Quaternion.Euler(90f, 0f, 0f);
 
         Gizmos.color = new Color(1f, 0.2f, 0.2f, 1f);
-        Gizmos.DrawCube(transform.position, size);
+        Gizmos.matrix = Matrix4x4.TRS(transform.position, gizmoRotation, Vector3.one);
+        Gizmos.DrawCube(Vector3.zero, size);
 
         Gizmos.color = new Color(0.2f, 1f, 0.2f, 1f);
-        Gizmos.DrawCube(new Vector3 (transform.position.x, transform.position.y - mastHeight, transform.position.z), size);
+        Gizmos.matrix = Matrix4x4.TRS(worldPosition, gizmoRotation, Vector3.one);
+        Gizmos.DrawCube(Vector3.zero, size);
+        Gizmos.matrix = Matrix4x4.identity;
+        //Gizmos.DrawCube(new Vector3 (transform.position.x, transform.position.y - mastHeight, transform.position.z), size);
     }
     private string GetScriptFolderPath()
     {
@@ -227,5 +247,13 @@ public class CreateMast : MonoBehaviour
     private void LogGreen(string str)
     {
         Debug.Log($"<color=green>{str}</color>");
+    }
+    private void LogRed(string str)
+    {
+        Debug.LogError($"<color=red>{str}</color>");
+    }
+    private void LogOrange(string str)
+    {
+        Debug.LogWarning($"<color=orange>{str}</color>");
     }
 }

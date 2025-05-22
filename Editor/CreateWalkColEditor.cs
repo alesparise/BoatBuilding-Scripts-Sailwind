@@ -4,6 +4,9 @@ using UnityEditor;
 [CustomEditor(typeof(CreateWalkCol))]
 public class CreateWalkColEditor : Editor
 {   /// Goal is to have the walk col generated at the click of a button
+
+    bool showObjects = true;
+
     public override void OnInspectorGUI()
     {
         CreateWalkCol script = (CreateWalkCol)target;
@@ -13,8 +16,8 @@ public class CreateWalkColEditor : Editor
             EditorGUILayout.HelpBox("This object already has a Walk Col", MessageType.Error);
             return;
         }
-        //base.OnInspectorGUI();
-        DrawPropertiesExcluding(serializedObject, "m_Script", "objectsToRemove");
+        base.OnInspectorGUI();
+        //DrawPropertiesExcluding(serializedObject, "m_Script", "objectsToRemove");
 
         //manually draw the objectToRemove array
         serializedObject.Update();
@@ -38,17 +41,20 @@ public class CreateWalkColEditor : Editor
     }
     private void ShowArray(SerializedProperty array)
     {
-        EditorGUILayout.PropertyField(array);
-        EditorGUILayout.PropertyField(array.FindPropertyRelative("Array.size"), new GUIContent("Number Of Objects"));
-        EditorGUI.indentLevel++;
-        if (array.isExpanded)
+        showObjects = EditorGUILayout.Foldout(showObjects, "Objects to remove");
+        if (showObjects)
         {
-            for (int i = 0; i < array.arraySize; i++)
+            EditorGUILayout.PropertyField(array.FindPropertyRelative("Array.size"), new GUIContent("Number Of Objects"));
+            EditorGUI.indentLevel++;
+            if (array.isExpanded)
             {
-                SerializedProperty element = array.GetArrayElementAtIndex(i);
-                EditorGUILayout.PropertyField(element, new GUIContent("Object " + (i)));
+                for (int i = 0; i < array.arraySize; i++)
+                {
+                    SerializedProperty element = array.GetArrayElementAtIndex(i);
+                    EditorGUILayout.PropertyField(element, new GUIContent("Object " + (i)));
+                }
             }
+            EditorGUI.indentLevel--;
         }
-        EditorGUI.indentLevel--;
     }
 }

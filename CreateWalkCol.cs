@@ -15,7 +15,7 @@ public class CreateWalkCol : MonoBehaviour
     public bool selfDestroy;
     [Tooltip("Destroy unnecessary objects from the walk col")]
     public bool removeObjects = true;
-    //[HideInInspector]
+    [HideInInspector]
     [Tooltip("The names of the objects that should be removed from the walk col. This does not include winches and blocks")]
     public string[] objectsToRemove = { "embark_col", "water_mask", "hull_push", "water_damage", "splash_mask" }; //add or change this to remove other objects. Does not include winches and blocks
 
