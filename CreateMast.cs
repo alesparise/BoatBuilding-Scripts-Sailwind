@@ -28,8 +28,12 @@ public class CreateMast : MonoBehaviour
 
     private Mast mast;
 
-    private static int mastCount = 0;
     private Transform walkCol;
+
+    private float radius;
+
+    private static int mastCount = 0;
+
 
     public void DoCreate()
     {
@@ -42,7 +46,7 @@ public class CreateMast : MonoBehaviour
         mast = Undo.AddComponent<Mast>(gameObject);
 
         //add the capsule collider and set it up
-        float radius = GetComponent<MeshRenderer>().bounds.extents.x * 1.2f;    //keeping a bit of margin to avoid sails clipping
+        radius = GetComponent<MeshRenderer>().bounds.extents.x * 1.2f;    //keeping a bit of margin to avoid sails clipping
         CapsuleCollider cc = Undo.AddComponent<CapsuleCollider>(gameObject);
         cc.direction = 2;
         cc.radius = radius;
@@ -119,11 +123,17 @@ public class CreateMast : MonoBehaviour
         //1 winch for each sail (reef)
         //1 winch for each sail (mid sheet) (not on the bowsprit)
         //if it's for a staysail only mast we need a left and right winch for each mast
+
         Vector3 mastPos = transform.position;
+        Vector3 left = -transform.up;
+        Vector3 right = transform.up;
+        Vector3 down = -transform.forward;
+        Vector3 back = -transform.right;
+
         if (!onlyStaysails)
         {   //normal masts only need one winch for each side for squares
-            mast.leftAngleWinch[0] = Instantiate(winchPrefab, mastPos + Vector3.left * 5f + Vector3.down * mastHeight, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
-            mast.rightAngleWinch[0] = Instantiate(winchPrefab, mastPos + Vector3.right * 5f + Vector3.down * mastHeight, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
+            mast.leftAngleWinch[0] = Instantiate(winchPrefab, mastPos + left * 5f + down * mastHeight, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
+            mast.rightAngleWinch[0] = Instantiate(winchPrefab, mastPos + right * 5f + down * mastHeight, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
             mast.leftAngleWinch[0].transform.localEulerAngles = new Vector3(0f, 0f, -90f);
             mast.rightAngleWinch[0].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
             mast.leftAngleWinch[0].name = "winch_left";
@@ -135,13 +145,13 @@ public class CreateMast : MonoBehaviour
         for (int i = 0; i < maxSails; i++)
         {
             //reef
-            mast.reefWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.down * (mastHeight - i * 0.35f) + Vector3.back * 0.25f, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
+            mast.reefWinch[i] = Instantiate(winchPrefab, mastPos + down * (mastHeight - i * 0.35f) + back * radius, Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
             mast.reefWinch[i].name = "reef_winch_" + i;
             mast.reefWinch[i].transform.localEulerAngles = new Vector3(0f, -90f, 0f);
             Undo.RegisterCreatedObjectUndo(mast.reefWinch[i].gameObject, "Create winch for mast " + gameObject.name);
 
             //blocks
-            mast.mastReefAtt[i] = Instantiate(blockPrefab, mastPos + Vector3.down * (i * 0.35f) + Vector3.back * 0.25f, Quaternion.identity, transform).transform;
+            mast.mastReefAtt[i] = Instantiate(blockPrefab, mastPos + down * (i * 0.35f) + back * 0.25f, Quaternion.identity, transform).transform;
             mast.mastReefAtt[i].name = "reef_block_" + i;
             mast.mastReefAtt[i].localEulerAngles = new Vector3(0f, 45f, 0f);
             mast.mastReefAtt[i].localScale = new Vector3(0.4f, 0.4f, 0.4f);
@@ -150,15 +160,15 @@ public class CreateMast : MonoBehaviour
             //code for left right in stays and code for mid sheet
             if (!bowsprit && !onlyStaysails)
             {   //mid sheet only exists for non staysails and non bowsprit masts
-                mast.midAngleWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.down * mastHeight + Vector3.back * (3f + i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
+                mast.midAngleWinch[i] = Instantiate(winchPrefab, mastPos + down * mastHeight + back * (3f + i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
                 mast.midAngleWinch[i].name = "mid_winch_" + i;
                 mast.midAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, 0f);
                 Undo.RegisterCreatedObjectUndo(mast.midAngleWinch[i].gameObject, "Create winch for mast " + gameObject.name);
             }
             if (onlyStaysails)
             {   //have two winches for each staysail
-                mast.leftAngleWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.left * 5f + Vector3.down * mastHeight + Vector3.back * (i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
-                mast.rightAngleWinch[i] = Instantiate(winchPrefab, mastPos + Vector3.right * 5f + Vector3.down * mastHeight + Vector3.back * (i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
+                mast.leftAngleWinch[i] = Instantiate(winchPrefab, mastPos + left * 5f + down * mastHeight + back * (i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
+                mast.rightAngleWinch[i] = Instantiate(winchPrefab, mastPos + right * 5f + down * mastHeight + back * (i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
                 mast.leftAngleWinch[i].name = "winch_left_" + i;
                 mast.rightAngleWinch[i].name = "winch_right_" + i;
                 mast.leftAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, -90f);
