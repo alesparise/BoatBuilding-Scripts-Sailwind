@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Experimental.SceneManagement;
@@ -221,9 +222,9 @@ public class CreateMast : MonoBehaviour
         Bounds bounds = GetComponent<MeshFilter>().sharedMesh.bounds;
         Vector3 extents = bounds.extents;
         radius = extents.x;
-        maxHeight = (float)System.Math.Round(extents.z * 2f - (extents.z + bounds.center.z), 2);
+        maxHeight = (float)Math.Round(extents.z * 2f - (extents.z + bounds.center.z), 2);
 
-        mastHeight = maxHeight;
+        mastHeight = (float)Math.Round(0.75f * maxHeight, 2);
 
         string scriptPath = GetScriptFolderPath();
         string prefabPath = Path.Combine(Path.GetDirectoryName(scriptPath), "Prefabs");
