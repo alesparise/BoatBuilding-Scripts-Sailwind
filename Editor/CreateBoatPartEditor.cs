@@ -30,7 +30,7 @@ public class CreateBoatPartEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
 
-        // Button to create the mast
+        // Button to create the part
         if (GUILayout.Button("Create Boat Part"))
         {
             script.DoCreate();

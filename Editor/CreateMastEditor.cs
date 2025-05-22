@@ -84,7 +84,12 @@ public class CreateMastEditor : Editor
         //script options
         EditorGUILayout.PropertyField(serializedObject.FindProperty("selfDestruct"));
 
-
         serializedObject.ApplyModifiedProperties();
+
+        // Button to create the mast
+        if (GUILayout.Button("Create Mast"))
+        {
+            script.DoCreate();
+        }
     }
 }

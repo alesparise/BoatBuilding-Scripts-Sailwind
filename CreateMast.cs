@@ -150,7 +150,7 @@ public class CreateMast : MonoBehaviour
             Undo.RegisterCreatedObjectUndo(mast.reefWinch[i].gameObject, "Create winch for mast " + gameObject.name);
 
             //blocks
-            mast.mastReefAtt[i] = Instantiate(blockPrefab, mastPos + down * (i * 0.35f) + back * 0.25f, Quaternion.identity, transform).transform;
+            mast.mastReefAtt[i] = Instantiate(blockPrefab, mastPos + down * (-0.5f -i * 0.25f) + back * (radius + 0.1f), Quaternion.identity, transform).transform;
             mast.mastReefAtt[i].name = "reef_block_" + i;
             mast.mastReefAtt[i].localEulerAngles = new Vector3(0f, 45f, 0f);
             mast.mastReefAtt[i].localScale = new Vector3(0.4f, 0.4f, 0.4f);
