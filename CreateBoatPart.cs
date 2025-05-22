@@ -2,6 +2,7 @@
 using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 using UnityEditor;
+using System;
 
 public class CreateBoatPart : MonoBehaviour
 {
@@ -29,6 +30,11 @@ public class CreateBoatPart : MonoBehaviour
     [HideInInspector]
     public GameObject boat;
     private Transform boatModel;
+    private float height;
+
+    private int[] massMult = { 18, 0, 2 };      //masts, other, stays
+    private int[] priceMult = { 150, 0, 60 };   //other category is to vague so enter it manually
+    private int[] installMult = { 110, 0, 20 }; //based on the average ratio of mass, price and install cost to height for the mid and large boats
 
     public void Reset()
     {   //add CreateMast component when the script is attached if it has mast or stay in the name, also adjust category
@@ -39,7 +45,7 @@ public class CreateBoatPart : MonoBehaviour
             if (gameObject.GetComponent<Mast>() == null && gameObject.GetComponent<CreateMast>() == null) 
                 gameObject.AddComponent<CreateMast>();
         }
-        else if (name.Contains("Stay"))
+        else if (name.Contains("stay"))
         {
             category = 2;
             if (gameObject.GetComponent<Mast>() == null && gameObject.GetComponent<CreateMast>() == null)
@@ -48,7 +54,17 @@ public class CreateBoatPart : MonoBehaviour
         else if (name.Contains("shrouds"))
         {
             category = 1;
+            return;
         }
+        else
+        {   //we skip the assigning of mass, price, install cost, name if it's not in those categories
+            return;
+        }
+
+        GetHeight();
+        SetMass();
+        SetPrice();
+        ExtractName();
     }
     public void DoCreate()
     {
@@ -134,6 +150,56 @@ public class CreateBoatPart : MonoBehaviour
         {
             LogGreen("Did not self destruct CreateBoatPart script");
         }
+    }
+    private void ExtractName()
+    {
+        string[] splitName = name.Split('_');
+        if (name.StartsWith("mast"))
+        {
+            string word = 
+            optionName = Capitalize(splitName[1]) + " " + (int.Parse(splitName[2]) + 1);
+            if (splitName[3] == "topmast")
+            {
+                optionName += " topmast";
+            }
+        }
+        else if (name.StartsWith("stay"))
+        {
+            optionName = Capitalize(splitName[1]) + " " + (int.Parse(splitName[2]) + 1) + " stay " + (int.Parse(splitName[3]) + 1);
+        }
+    }
+    private string Capitalize(string word)
+    {
+        if (string.IsNullOrEmpty(word))
+            return string.Empty;
+
+        return char.ToUpper(word[0]) + word.Substring(1);
+    }
+    private void GetHeight()
+    {   //get height from the mesh bounds
+        Mesh mesh = GetComponent<MeshFilter>().sharedMesh;
+        if (mesh != null)
+        {
+            height = mesh.bounds.extents.z * 2f;
+        }
+        else
+        {
+            height = 0;
+        }
+    }
+    private void SetMass()
+    {
+        mass = ToNearest((int)(height * massMult[category]), 10);
+    }
+    private void SetPrice()
+    {
+        float price = height * priceMult[category];
+        basePrice = ToNearest((int)(height * priceMult[category]), 100);
+        installCost = ToNearest((int)(height * installMult[category]), 100);
+    }
+    public int ToNearest(int i, int nearest)
+    {
+        return (i + 5 * nearest / 10) / nearest * nearest;
     }
     private void FindBoatModel(Transform tra)
     {   // finds the boatModel object going up recursively in the hierarchy
