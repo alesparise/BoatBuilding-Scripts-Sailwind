@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿#if (UNITY_EDITOR)
+using System.IO;
 using System;
 using UnityEngine;
 using UnityEditor;
@@ -20,6 +21,10 @@ public class CreateMast : MonoBehaviour
     public bool onlyStaysails;
     [Tooltip("Only allow squares (bowsprit)")]
     public bool bowsprit;
+    [Tooltip("The rack for this mast side winches")]
+    public WinchRack sideRack;
+    [Tooltip("The rack for this mast mid winches")]
+    public WinchRack midRack;
 
     [Header("Script Options")]
     [Tooltip("Destroy this script once it's done")]
@@ -124,6 +129,15 @@ public class CreateMast : MonoBehaviour
         //1 winch for each sail (mid sheet) (not on the bowsprit)
         //if it's for a staysail only mast we need a left and right winch for each mast
 
+        if (sideRack != null)
+        {
+            Undo.RecordObject(sideRack, "Create winch rack for mast " + gameObject.name);
+        }
+        if (midRack != null)
+        {
+            Undo.RecordObject(midRack, "Create winch rack for mast " + gameObject.name);
+        }
+
         Vector3 mastPos = transform.position;
         Vector3 left = -transform.up;
         Vector3 right = transform.up;
@@ -138,6 +152,21 @@ public class CreateMast : MonoBehaviour
             mast.rightAngleWinch[0].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
             mast.leftAngleWinch[0].name = "winch_left";
             mast.rightAngleWinch[0].name = "winch_right";
+
+            if (sideRack != null)
+            {
+                mast.leftAngleWinch[0].transform.parent = sideRack.other.transform;
+                mast.leftAngleWinch[0].transform.localPosition = new Vector3(0f, sideRack.other.winchesPosY[sideRack.other.lastWinch], 0f);
+                mast.leftAngleWinch[0].transform.parent = transform;
+                sideRack.other.lastWinch++;
+                sideRack.other.winches.Add(mast.leftAngleWinch[0].transform);
+                
+                mast.rightAngleWinch[0].transform.parent = sideRack.transform;
+                mast.rightAngleWinch[0].transform.localPosition = new Vector3(0f, sideRack.winchesPosY[sideRack.lastWinch], 0f);
+                mast.rightAngleWinch[0].transform.parent = transform;
+                sideRack.lastWinch++;
+                sideRack.winches.Add(mast.rightAngleWinch[0].transform);
+            }
             Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[0].gameObject, "Create winch for mast " + gameObject.name);
             Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[0].gameObject, "Create winch for mast " + gameObject.name);
         }
@@ -163,6 +192,16 @@ public class CreateMast : MonoBehaviour
                 mast.midAngleWinch[i] = Instantiate(winchPrefab, mastPos + down * mastHeight + back * (3f + i * 0.35f), Quaternion.identity, transform).GetComponent<GPButtonRopeWinch>();
                 mast.midAngleWinch[i].name = "mid_winch_" + i;
                 mast.midAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+
+                if (midRack != null)
+                {
+                    mast.midAngleWinch[i].transform.parent = midRack.transform;
+                    mast.midAngleWinch[i].transform.localPosition = new Vector3(0f, midRack.winchesPosY[midRack.lastWinch], 0f);
+                    mast.midAngleWinch[i].transform.parent = transform;
+                    midRack.lastWinch++;
+                    midRack.winches.Add(mast.midAngleWinch[i].transform);
+                }
+
                 Undo.RegisterCreatedObjectUndo(mast.midAngleWinch[i].gameObject, "Create winch for mast " + gameObject.name);
             }
             if (onlyStaysails)
@@ -173,6 +212,23 @@ public class CreateMast : MonoBehaviour
                 mast.rightAngleWinch[i].name = "winch_right_" + i;
                 mast.leftAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, -90f);
                 mast.rightAngleWinch[i].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+
+                if (sideRack != null)
+                {
+                    mast.leftAngleWinch[i].transform.parent = sideRack.other.transform;
+                    mast.leftAngleWinch[i].transform.localPosition = new Vector3(0f, sideRack.other.winchesPosY[sideRack.other.lastWinch], 0f);
+                    mast.leftAngleWinch[i].transform.parent = transform;
+                    sideRack.other.lastWinch++;
+                    sideRack.other.winches.Add(mast.leftAngleWinch[i].transform);
+
+                    mast.rightAngleWinch[i].transform.parent = sideRack.transform;
+                    mast.rightAngleWinch[i].transform.localPosition = new Vector3(0f, sideRack.winchesPosY[sideRack.lastWinch], 0f);
+                    mast.rightAngleWinch[i].transform.parent = transform;
+                    sideRack.lastWinch++;
+                    sideRack.winches.Add(mast.rightAngleWinch[i].transform);
+                    
+                }
+
                 Undo.RegisterCreatedObjectUndo(mast.leftAngleWinch[i].gameObject, "Create winch for mast " + gameObject.name);
                 Undo.RegisterCreatedObjectUndo(mast.rightAngleWinch[i].gameObject, "Create winch for mast " + gameObject.name);
             }
@@ -287,3 +343,4 @@ public class CreateMast : MonoBehaviour
         Debug.LogWarning($"<color=orange>{str}</color>");
     }
 }
+#endif

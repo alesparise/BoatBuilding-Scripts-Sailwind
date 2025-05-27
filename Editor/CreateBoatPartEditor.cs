@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if (UNITY_EDITOR)
+using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(CreateBoatPart))]
@@ -65,3 +66,4 @@ public class CreateBoatPartEditor : Editor
         }    
     }
 }
+#endif

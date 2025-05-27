@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if (UNITY_EDITOR)
+using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -103,4 +104,4 @@ public class BoatCustomPartsEditor : Editor
         }
     }
 }
-
+#endif

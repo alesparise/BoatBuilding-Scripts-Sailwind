@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿#if (UNITY_EDITOR)
+using System.Collections.Generic;
 using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 using UnityEditor;
-using System;
 
 public class CreateBoatPart : MonoBehaviour
 {
@@ -248,3 +248,4 @@ public class CreateBoatPart : MonoBehaviour
         Debug.Log($"<color=green>{str}</color>");
     }
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if (UNITY_EDITOR)
+using UnityEngine;
 using UnityEditor;
 
 [CustomEditor(typeof(CreateWalkCol))]
@@ -57,3 +58,4 @@ public class CreateWalkColEditor : Editor
         }
     }
 }
+#endif

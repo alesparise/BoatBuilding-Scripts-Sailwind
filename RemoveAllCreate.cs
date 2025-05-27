@@ -1,4 +1,5 @@
-﻿using UnityEditor.Experimental.SceneManagement;
+﻿#if (UNITY_EDITOR)
+using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 
 public class RemoveAllCreate : MonoBehaviour
@@ -10,6 +11,8 @@ public class RemoveAllCreate : MonoBehaviour
         CreateBoatPart[] cbp = root.GetComponentsInChildren<CreateBoatPart>(true);
         CreateMast[] cm = root.GetComponentsInChildren<CreateMast>(true);
         CreateWalkCol[] cwc = root.GetComponentsInChildren<CreateWalkCol>(true);
+        CreateChildOption[] cco = root.GetComponentsInChildren<CreateChildOption>(true);
+
 
         foreach (CreateBoatPart part in cbp)
         {   //remove CreateBoatPart components
@@ -28,3 +31,4 @@ public class RemoveAllCreate : MonoBehaviour
         DestroyImmediate(this);
     }
 }
+#endif

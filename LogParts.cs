@@ -1,5 +1,4 @@
-﻿using Boo.Lang;
-using System.Linq;
+﻿#if (UNITY_EDITOR)
 using UnityEngine;
 
 public class LogParts : MonoBehaviour
@@ -107,3 +106,4 @@ public class LogParts : MonoBehaviour
         Debug.Log(log);
     }
 }
+#endif
