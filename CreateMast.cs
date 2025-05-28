@@ -316,7 +316,6 @@ public class CreateMast : MonoBehaviour
         Gizmos.matrix = Matrix4x4.TRS(worldPosition, gizmoRotation, Vector3.one);
         Gizmos.DrawCube(Vector3.zero, size);
         Gizmos.matrix = Matrix4x4.identity;
-        //Gizmos.DrawCube(new Vector3 (transform.position.x, transform.position.y - mastHeight, transform.position.z), size);
     }
     private string GetScriptFolderPath()
     {
