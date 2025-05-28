@@ -1,4 +1,5 @@
-﻿using Crest;
+﻿#if (UNITY_EDITOR)
+using Crest;
 using System.Reflection;
 using UnityEngine;
 
@@ -62,7 +63,7 @@ public class ShowBoatInfos : MonoBehaviour
             foreach (FloaterForcePoints point in probes._forcePoints)
             {
                 Vector3 pos = Vector3.Scale(point._offsetPosition, customScale);
-                Gizmos.matrix = Matrix4x4.TRS(transform.position, gizmoRotation, Vector3.one);
+                Gizmos.matrix = Matrix4x4.TRS(transform.position + Vector3.up * center.y, gizmoRotation, Vector3.one);
                 Gizmos.DrawCube(pos, Vector3.one * 0.5f);
             }
         }
@@ -92,3 +93,4 @@ public class ShowBoatInfos : MonoBehaviour
 
     }
 }
+#endif
