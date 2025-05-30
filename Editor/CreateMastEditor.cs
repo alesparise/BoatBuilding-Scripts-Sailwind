@@ -15,6 +15,12 @@ public class CreateMastEditor : Editor
     }
     public override void OnInspectorGUI()
     {
+        serializedObject.Update();
+
+        EditorGUI.BeginDisabledGroup(true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Script"));
+        EditorGUI.EndDisabledGroup();
+
         #region ErrorBox
         Mast m = script.GetComponent<Mast>();
         CapsuleCollider cc = script.GetComponent<CapsuleCollider>();
@@ -26,6 +32,11 @@ public class CreateMastEditor : Editor
             else if (m != null) error += "Mast Component";
 
             EditorGUILayout.HelpBox(error, MessageType.Error);
+
+            SerializedProperty mastHeightError = serializedObject.FindProperty("mastHeight");
+            EditorGUILayout.Slider(mastHeightError, 0f, maxHeight);
+
+            serializedObject.ApplyModifiedProperties();
             return;
         }
         #endregion
@@ -37,12 +48,6 @@ public class CreateMastEditor : Editor
         //s.richText = true;
         //EditorGUILayout.LabelField("<b>CUSTOM PART HERE</b>", s);
         #endregion
-
-        serializedObject.Update();
-
-        EditorGUI.BeginDisabledGroup(true);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Script"));
-        EditorGUI.EndDisabledGroup();
 
         //prefabs
         EditorGUILayout.PropertyField(serializedObject.FindProperty("winchPrefab"));

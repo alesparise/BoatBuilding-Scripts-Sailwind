@@ -1,9 +1,11 @@
 ﻿#if (UNITY_EDITOR)
-using System.IO;
 using System;
-using UnityEngine;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.SceneManagement;
+using UnityEngine;
 
 public class CreateMast : MonoBehaviour
 {
@@ -40,7 +42,7 @@ public class CreateMast : MonoBehaviour
 
     private bool init;
 
-    private static int mastCount = 0;
+    //private int mastCount = 0;
 
     public void DoCreate()
     {
@@ -50,6 +52,9 @@ public class CreateMast : MonoBehaviour
         int group = Undo.GetCurrentGroup();
         //add Mast component and Collider, set collider reference, rigidbody reference, walk col reference
         mast = Undo.AddComponent<Mast>(gameObject);
+
+        //get the root object
+        GameObject boat = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;
 
         //add the capsule collider and set it up
         CapsuleCollider cc = Undo.AddComponent<CapsuleCollider>(gameObject);
@@ -79,8 +84,7 @@ public class CreateMast : MonoBehaviour
         mast.onlySquareSails = bowsprit;
         mast.maxSails = maxSails;
         mast.mastHeight = mastHeight;
-        mast.orderIndex = mastCount;
-        mastCount++;
+        mast.orderIndex = GetOrderIndex(boat);
         LogGreen("Configured Mast variables");
 
         //initialize the mast with the correct winch arrays sizes
@@ -107,8 +111,7 @@ public class CreateMast : MonoBehaviour
         Undo.CollapseUndoOperations(group);
 
         //save the changes in the prefab (setting it as dirty seems to do the trick)
-        GameObject go = PrefabStageUtility.GetCurrentPrefabStage().prefabContentsRoot;
-        EditorUtility.SetDirty(go);
+        EditorUtility.SetDirty(boat);
         LogGreen("Saved changes to the prefab");
 
         //self destroy this script (this should be last)
@@ -121,6 +124,34 @@ public class CreateMast : MonoBehaviour
         {
             LogGreen("Did not self destruct");
         }
+    }
+    private int GetOrderIndex(GameObject boat)
+    {
+        Mast[] masts = boat.GetComponentsInChildren<Mast>();
+
+        if (masts == null || masts.Length == 0)
+        {   //if there are no masts, this is the first one
+            return 0;
+        }
+
+        List<int> indices = masts
+            .Select(m => m.orderIndex)
+            .Distinct()
+            .ToList();
+
+        indices.Sort();
+
+        // Look for the first missing integer starting from 0
+        for (int i = 0; i < indices.Count; i++)
+        {
+            if (indices[i] != i)
+            {
+                return i;
+            }
+        }
+
+        // No gaps found, return the next available index
+        return indices.Count;
     }
     private void CreateWinchesAndBlocks()
     {   //we need: 

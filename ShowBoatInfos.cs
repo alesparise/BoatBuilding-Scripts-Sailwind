@@ -80,7 +80,7 @@ public class ShowBoatInfos : MonoBehaviour
             Vector3 boatSize = new Vector3(alignNormal.ObjectWidth, 1f, boatLen);
             Gizmos.DrawWireCube(Vector3.zero, boatSize);
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(Vector3.zero * -bottomH, 0.2f);
+            Gizmos.DrawWireSphere(Vector3.up * bottomH, 0.2f);
         }
         if (keel != null && showBoatKeel)
         {
