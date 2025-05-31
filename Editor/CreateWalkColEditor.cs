@@ -14,8 +14,8 @@ public class CreateWalkColEditor : Editor
 
         if (script.transform.parent.Find("WALK " + script.name) != null)
         {
-            EditorGUILayout.HelpBox("This object already has a Walk Col", MessageType.Error);
-            return;
+            EditorGUILayout.HelpBox("This object already has a Walk Col, the existing one will be replaced, but all references will be reassigned and existing colliders should be kept.", MessageType.Warning);
+            //return;   //now that we can update the walk col, we don't want to stop here, but keep the warning message
         }
         base.OnInspectorGUI();
 
