@@ -7,12 +7,12 @@ using UnityEngine;
 public class CreateWalkCol : MonoBehaviour
 {
     [Header("Walk Col Position")]
-    [Tooltip("The position the walk col will be created at.+")]
+    [Tooltip("The position the walk col will be created at")]
     public Vector3 position;
     [Header("Script Options")]
-    [Tooltip("Automatically adds mesh colliders to every child in the walk col. Only use for quick tests.")]
+    [Tooltip("Automatically adds mesh colliders to every child in the walk col. Only use for quick tests")]
     public bool autoMeshColliders;
-    [Tooltip("Automatically removes this script once used.")]
+    [Tooltip("Automatically removes this script once used")]
     public bool selfDestroy;
     [Tooltip("Destroy unnecessary objects from the walk col")]
     public bool removeObjects = true;
@@ -23,6 +23,7 @@ public class CreateWalkCol : MonoBehaviour
     private List<BoatPartOption> partOptions = new List<BoatPartOption>();
     private List<Mast> masts = new List<Mast>();
     private List<GameObject> winches = new List<GameObject>();
+    private List<string> hadColliders = new List<string>();    //we store the names of the objects that have walk colliders when we update the walk col, so that we can automatically reassign them eventually
 
     private GameObject boat;    //prefab root object
 
@@ -37,17 +38,29 @@ public class CreateWalkCol : MonoBehaviour
         partOptions.Clear();
         masts.Clear();
         winches.Clear();
+        hadColliders.Clear();
 
-        Transform prefab = boat.transform;  //the prefab's transform
+        Transform oldWalk = boat.transform.Find("WALK " + boat.name);
+        if (oldWalk != null)
+        {   //if the walk col already exists, we "update" it
+            Debug.LogWarning("<color=orange>BoatBuilder: Walk Col already exists, updating it!</color>");
+            Collider[] colliders = oldWalk.GetComponentsInChildren<Collider>(true);
+            foreach (Collider collider in colliders)
+            {   //add all colliders to the list of objects names that have colliders
+               hadColliders.Add(collider.name);
+            }
+        }
+
+        Transform prefab = boat.transform;
 
         GameObject walkCol = Instantiate(gameObject, prefab);
         walkCol.transform.localPosition = position;
+        walkCol.transform.localRotation = Quaternion.identity;
         walkCol.name = "WALK " + name;
 
         Undo.RegisterCreatedObjectUndo(walkCol, "Create Walk Col"); //can use ctrl+z to undo
 
         Debug.Log("<color=green>BoatBuilder: Instantiated Walk Col</color>");
-
 
         //remove all unnecessary components
         if (removeObjects)
@@ -62,11 +75,13 @@ public class CreateWalkCol : MonoBehaviour
         RemoveComponents(walkCol);
 
         //set all BoatPartOptions and Mast references to the WALK col object
+        //restore the MeshColliders if we are updating a walk col
         TraverseHierarchy(transform);
         SetWalkCols(walkCol.transform);
+        if (hadColliders.Count != 0) RestoreColliders(walkCol.transform);
 
         //add mesh colliders to all children
-        if (autoMeshColliders)
+        if (autoMeshColliders && hadColliders.Count == 0)
         {
             meshColliderCount = 0;
             AddMeshColliders(walkCol);
@@ -117,10 +132,31 @@ public class CreateWalkCol : MonoBehaviour
     }
     private void SetWalkCols(Transform tra)
     {
-
         foreach (BoatPartOption option in partOptions)
         {
             option.walkColObject = CreateBoatPart.FindWalkColObject(option.transform, tra);
+
+            if (option.childOptions != null && option.childOptions.Length > 0)
+            {   //if this part option has child options, we set the walk col object for them as well
+                GameObject[] children = new GameObject[option.childOptions.Length / 2];
+                int j = 0;
+                for (int i = 0; i < option.childOptions.Length; i++)
+                {   // condensate the child options into a new array, skipping nulls
+                    if (option.childOptions[i] == null) continue; //skip if the child is null
+                    children[j] = option.childOptions[i];
+                    j++;
+                }
+                j = 0;
+                option.childOptions = new GameObject[children.Length * 2];
+                for (int i = 0; i < option.childOptions.Length; i++)
+                {   //set the walk col object for each child option
+                    option.childOptions[i] = children[j];
+                    i++;
+                    option.childOptions[i] = CreateBoatPart.FindWalkColObject(option.childOptions[i].transform, tra);
+                    j++;
+                }
+                Debug.Log("Set " + option.childOptions.Length + " child options for " + option.name);
+            }
             Debug.Log("Set walk col object for " + option.name);
         }
         foreach (Mast mast in masts)
@@ -132,7 +168,7 @@ public class CreateWalkCol : MonoBehaviour
     private void TraverseHierarchy(Transform tra)
     {
         Mast mast = tra.GetComponent<Mast>();
-        if (mast != null) masts.Add(mast); //Debug.Log("Added mast: " + mast.name + " to list");
+        if (mast != null) masts.Add(mast);
 
         BoatPartOption partOption = tra.GetComponent<BoatPartOption>();
         if (partOption != null) partOptions.Add(partOption);
@@ -146,18 +182,13 @@ public class CreateWalkCol : MonoBehaviour
     {   //remove all unnecessary components from the walk col
         int i = 0;
         Component[] components = walkCol.GetComponentsInChildren<Component>(true);
-        foreach (Component component in components)
-        {
-            if (component is Transform || component is MeshRenderer || component is MeshFilter)
-            {
-                continue;
-            }
-            else
-            {
-                i++;
-                Debug.Log("BoatBuilder: Removing " + component.GetType() + " from the walkCol");
-                DestroyImmediate(component);
-            }
+
+        for (int j = 0; j < components.Length; j++)
+        {   //go through all components and remove the ones that are not needed
+            Component component = components[j];
+            if (component is Transform || component is MeshRenderer || component is MeshFilter) continue; //keep these components
+            DestroyImmediate(component);
+            i++;
         }
         Debug.Log("<color=green>BoatBuilder: Removed <b>" + i + "</b> components from the walkCol</color>");
 
@@ -176,6 +207,15 @@ public class CreateWalkCol : MonoBehaviour
                 DestroyImmediate(toRemove.gameObject);
                 Debug.Log("<color=green>Removed " + obj + " object</color>");
             }
+        }
+    }
+    private void RestoreColliders(Transform tra)
+    {   //restore the colliders that were removed from the walk col
+
+        if (hadColliders.Contains(tra.name)) tra.gameObject.AddComponent<MeshCollider>();
+        foreach (Transform child in tra.transform)
+        {   
+            RestoreColliders(child);
         }
     }
     private void CollectWinches(GameObject obj)
