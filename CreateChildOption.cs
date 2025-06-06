@@ -7,7 +7,7 @@ public class CreateChildOption : MonoBehaviour
     public GameObject[] childOptions;
     public Transform walkCol;
 
-    [Header("ScriptOption")]
+    [Header("Script Options")]
     [Tooltip("Automatically destroy this script once done")]
     public bool selfDestruct;
 

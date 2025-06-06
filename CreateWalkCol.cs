@@ -4,6 +4,9 @@ using UnityEditor;
 using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 
+/// <summary>
+/// NOTE: This script goes on the object that would have the BoatHorizon component (the boat model)
+/// </summary>
 public class CreateWalkCol : MonoBehaviour
 {
     [Header("Walk Col Position")]
@@ -40,15 +43,17 @@ public class CreateWalkCol : MonoBehaviour
         winches.Clear();
         hadColliders.Clear();
 
-        Transform oldWalk = boat.transform.Find("WALK " + boat.name);
+        Transform oldWalk = boat.transform.Find("WALK " + name);
         if (oldWalk != null)
         {   //if the walk col already exists, we "update" it
-            Debug.LogWarning("<color=orange>BoatBuilder: Walk Col already exists, updating it!</color>");
+            Debug.LogWarning("<color=orange>CreateWalkCol: Walk Col already exists, updating it!</color>");
             Collider[] colliders = oldWalk.GetComponentsInChildren<Collider>(true);
             foreach (Collider collider in colliders)
             {   //add all colliders to the list of objects names that have colliders
                hadColliders.Add(collider.name);
             }
+            DestroyImmediate(oldWalk.gameObject);
+            Debug.LogWarning("<color=orange>CreateWalkCol: Deleted old walk col, recreating...</color>");
         }
 
         Transform prefab = boat.transform;
@@ -60,7 +65,7 @@ public class CreateWalkCol : MonoBehaviour
 
         Undo.RegisterCreatedObjectUndo(walkCol, "Create Walk Col"); //can use ctrl+z to undo
 
-        Debug.Log("<color=green>BoatBuilder: Instantiated Walk Col</color>");
+        Debug.Log("<color=green>CreateWalkCol: Instantiated Walk Col</color>");
 
         //remove all unnecessary components
         if (removeObjects)
@@ -70,9 +75,11 @@ public class CreateWalkCol : MonoBehaviour
             {
                 DestroyImmediate(winch);
             }
-            Debug.Log("<color=green>BoatBuilder: Removed <b>" + removedWinches + "</b> winches and blocks from the walkCol</color>");
+            Debug.Log("<color=green>CreateWalkCol: Removed <b>" + removedWinches + "</b> winches and blocks from the walkCol</color>");
         }
         RemoveComponents(walkCol);
+        RemoveComponents(walkCol);
+        RemoveComponents(walkCol); //running it trice to delete all components that were skipped because of dependencies
 
         //set all BoatPartOptions and Mast references to the WALK col object
         //restore the MeshColliders if we are updating a walk col
@@ -85,49 +92,49 @@ public class CreateWalkCol : MonoBehaviour
         {
             meshColliderCount = 0;
             AddMeshColliders(walkCol);
-            Debug.LogWarning("<color=orange>BoatBuilder: Added <b>" + meshColliderCount + "</b> mesh colliders to the walkCol</color>");
+            Debug.LogWarning("<color=orange>CreateWalkCol: Added <b>" + meshColliderCount + "</b> mesh colliders to the walkCol</color>");
             Debug.LogWarning("<color=orange>NOTE: this is not ideal, you likely don't need this many!!!</color>");
         }
         else
         {
-            Debug.Log("<color=green>BoatBuilder: Did not add any mesh colliders</color>");
+            Debug.Log("<color=green>CreateWalkCol: Did not add any mesh colliders</color>");
         }
 
         //set the walk col reference in the right place
         BoatRefs boatRefs = prefab.GetComponent<BoatRefs>();
         if (boatRefs == null)
         {
-            Debug.LogError("BoatBuilder: Could not find BoatRefs component on the prefab");
+            Debug.LogError("CreateWalkCol: Could not find BoatRefs component on the prefab");
         }
         else
         {
             boatRefs.walkCol = walkCol.transform;
-            Debug.Log("<color=green>BoatBuilder: Set walkCol reference in BoatRefs</color>");
+            Debug.Log("<color=green>CreateWalkCol: Set walkCol reference in BoatRefs</color>");
         }
         BoatEmbarkCollider bec = GetComponentInChildren<BoatEmbarkCollider>();
         if (bec == null)
         {
-            Debug.LogError("BoatBuilder: Could not find BoatEmbarkCollider component inside of the prefab");
+            Debug.LogError("CreateWalkCol: Could not find BoatEmbarkCollider component inside of the prefab");
         }
         else
         {
             bec.walkCollider = walkCol.transform;
-            Debug.Log("<color=green>BoatBuilder: Set walkCol reference in BoatEmbarkCollider</color>");
+            Debug.Log("<color=green>CreateWalkCol: Set walkCol reference in BoatEmbarkCollider</color>");
         }
 
         //set the walk col to the right layer
         SetLayer(walkCol);
-        Debug.Log("<color=green>BoatBuilder: Set walkCol layer to WalkCols (8)</color>");
+        Debug.Log("<color=green>CreateWalkCol: Set walkCol layer to WalkCols (8)</color>");
 
         //remove this script
         if (selfDestroy)
         {
-            Debug.LogWarning("<color=orange>BoatBuilder: Self destroying! (DON'T PANIC!)</color>");
+            Debug.LogWarning("<color=orange>CreateWalkCol: Self destroying! (DON'T PANIC!)</color>");
             DestroyImmediate(this);
         }
         else
         {
-            Debug.Log("<color=green>BoatBuilder: Kept self</color>");
+            Debug.Log("<color=green>CreateWalkCol: Kept self</color>");
         }
     }
     private void SetWalkCols(Transform tra)
@@ -190,7 +197,7 @@ public class CreateWalkCol : MonoBehaviour
             DestroyImmediate(component);
             i++;
         }
-        Debug.Log("<color=green>BoatBuilder: Removed <b>" + i + "</b> components from the walkCol</color>");
+        Debug.Log("<color=green>CreateWalkCol: Removed <b>" + i + "</b> components from the walkCol</color>");
 
         //remove the objects mentioned in the objectsToRemove array
         if (!removeObjects) return;
@@ -200,7 +207,7 @@ public class CreateWalkCol : MonoBehaviour
             Transform toRemove = walkTransform.Find(obj);
             if (toRemove == null)
             {
-                Debug.LogError("<color=red>BoatBuilder: Could not find " + obj + " object</color>");
+                Debug.LogError("<color=red>CreateWalkCol: Could not find " + obj + " object</color>");
             }
             else
             {
@@ -212,7 +219,11 @@ public class CreateWalkCol : MonoBehaviour
     private void RestoreColliders(Transform tra)
     {   //restore the colliders that were removed from the walk col
 
-        if (hadColliders.Contains(tra.name)) tra.gameObject.AddComponent<MeshCollider>();
+        if (hadColliders.Contains(tra.name))
+        {
+            MeshCollider col = tra.gameObject.AddComponent<MeshCollider>();
+            col.convex = false;
+        }
         foreach (Transform child in tra.transform)
         {   
             RestoreColliders(child);
